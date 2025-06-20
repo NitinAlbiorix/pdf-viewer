@@ -22,3 +22,7 @@ export const downloadPDF = (storedName: string) =>
     responseType: 'blob',
     // headers: { 'ngrok-skip-browser-warning': 'true' },
   });
+
+  export const deletePDF = (id: string) =>
+  api.delete(`/pdf/${id}`);
+
