@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getPDFList } from '../api';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
+import axios from 'axios';
 
 
 export default function PDFList() {
@@ -33,21 +34,14 @@ export default function PDFList() {
     const loadingToast = toast.loading('Downloading...');
 
     try {
-      const response = await fetch(
-        `https://3d8a-2401-4900-1c80-95b6-8432-9b0a-8d48-ba19.ngrok-free.app/uploads/${storedName}`,
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/uploads/${storedName}`,
         {
-          headers: {
-            'ngrok-skip-browser-warning': 'true',
-          },
-        }
+          responseType: 'blob',
+        },
       );
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch file');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       link.download = name;
@@ -112,7 +106,7 @@ export default function PDFList() {
               </button>
             </div>
             <iframe
-              src={`https://3d8a-2401-4900-1c80-95b6-8432-9b0a-8d48-ba19.ngrok-free.app/uploads/${previewId}`}
+              src={`${process.env.REACT_APP_API_URL}/uploads/${previewId}`}
               className="w-full h-[80vh]"
               title="PDF Viewer"
             />
