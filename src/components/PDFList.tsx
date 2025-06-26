@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { getPDFList, deletePDF } from '../api';
+import { getPDFList } from '../api';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 
 
 export default function PDFList() {
-  const [pdfs, setPdfs] = useState<{ id: string; name: string; storedName: string }[]>([]);
+  const [pdfs, setPdfs] = useState<{ id: string; name: string; path: string }[]>([]);
   const [previewId, setPreviewId] = useState<string | null>(null);
 
   const fetchPdfs = async () => {
@@ -17,6 +17,7 @@ export default function PDFList() {
           id: pdf.id.toString(),
           name: pdf.originalName,
           storedName: pdf.storedName,
+          path: pdf.path, 
         }))
         : [];
       setPdfs(transformed);
@@ -30,16 +31,13 @@ export default function PDFList() {
     fetchPdfs();
   }, []);
 
-  const handleDownload = async (storedName: string, name: string) => {
+  const handleDownload = async (pdfUrl: string, name: string) => {
     const loadingToast = toast.loading('Downloading...');
 
     try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/uploads/${storedName}`,
-        {
-          responseType: 'blob',
-        },
-      );
+      const response = await axios.get(pdfUrl, {
+        responseType: 'blob',
+      });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
@@ -55,17 +53,6 @@ export default function PDFList() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    const loadingToast = toast.loading('Deleting...');
-    try {
-      await deletePDF(id);
-      toast.success('PDF deleted successfully!', { id: loadingToast });
-      fetchPdfs(); // refresh the list
-    } catch (error) {
-      console.error('Delete failed:', error);
-      toast.error('Delete failed!', { id: loadingToast });
-    }
-  };
 
 
   return (
@@ -95,22 +82,16 @@ export default function PDFList() {
                       <td className="px-6 py-4 text-gray-800 font-medium">{pdf.name}</td>
                       <td className="px-6 py-4 space-x-3">
                         <button
-                          onClick={() => handleDownload(pdf.storedName, pdf.name)}
+                          onClick={() => handleDownload(pdf.path, pdf.name)}
                           className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
                         >
                           Download
                         </button>
                         <button
-                          onClick={() => setPreviewId(pdf.storedName)}
+                          onClick={() => setPreviewId(pdf.path)}
                           className="px-4 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
                         >
                           View
-                        </button>
-                         <button
-                          onClick={() => handleDelete(pdf.id)}
-                          className="px-4 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                        >
-                          Delete
                         </button>
                       </td>
                     </tr>
@@ -139,7 +120,7 @@ export default function PDFList() {
               </button>
             </div>
             <iframe
-              src={`${process.env.REACT_APP_API_URL}/uploads/${previewId}`}
+              src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(previewId!)}`}
               className="w-full h-[80vh]"
               title="PDF Viewer"
             />
